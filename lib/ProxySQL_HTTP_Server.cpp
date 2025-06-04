@@ -298,6 +298,7 @@ static char *generate_buttons(char *base) {
         html.append("<a href=\"/\""); html.append(style2); html.append("Home</a>\n");
         html.append("<a href=stats?metric=system"); html.append(style2); html.append("System</a>\n");
         html.append("<a href=stats?metric=mysql"); html.append(style2); html.append("MySQL</a>\n");
+        html.append("<a href=stats?metric=pgsql"); html.append(style2); html.append("PostgreSQL</a>\n");
         html.append("<a href=stats?metric=cache"); html.append(style2); html.append("Query Cache</a>\n");
 	html.append("</div></span>");
 
@@ -460,7 +461,7 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 	}
 	page_sec++;
 	if (page_sec > ProxySQL_HTTP_Server_Rate_Limit) {
-		response = MHD_create_response_from_buffer(strlen(RATE_LIMIT_PAGE), (void *) RATE_LIMIT_PAGE, MHD_RESPMEM_PERSISTENT); 
+		response = MHD_create_response_from_buffer(strlen(RATE_LIMIT_PAGE), (void *) RATE_LIMIT_PAGE, MHD_RESPMEM_PERSISTENT);
   		ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
   		MHD_destroy_response (response);
 		return ret;
@@ -593,7 +594,7 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			delete memory_sqlite;
 #endif
 			delete cpu_sqlite;
-			
+
 			s.append("</body></html>");
 			response = MHD_create_response_from_buffer(s.length(), (void *) s.c_str(), MHD_RESPMEM_MUST_COPY);
   			ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
@@ -721,6 +722,96 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			delete myhgm_metrics_sqlite;
 
 
+
+			s.append("</body></html>");
+			response = MHD_create_response_from_buffer(s.length(), (void *) s.c_str(), MHD_RESPMEM_MUST_COPY);
+			ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
+			MHD_destroy_response (response);
+			return ret;
+		}
+		if (strcmp(valmetric,"pgsql")==0) {
+			string s = generate_header((char *)"ProxySQL Graphs");
+			char *buttons = generate_buttons((char *)"pgsql");
+			s.append(buttons);
+			free(buttons);
+			s.append("<div class=\"graphs\" style=\"clear: both; height: auto;\">\n");
+			string s1 = generate_canvas((char *)"myChart1");
+			s.append(s1.c_str());
+			s.append("<p></p>\n");
+			s1 = generate_canvas((char *)"myChart2");
+			s.append(s1.c_str());
+			s.append("</div>\n");
+			char **nm = NULL;
+			char **nl = NULL;
+			char **nv = NULL;
+			char *ts = NULL;
+
+			SQLite3_result *pgsql_metrics_sqlite = GloProxyStats->get_pgsql_metrics(interval_i);
+			nm = (char **)malloc(sizeof(char *)*6);
+			nm[0] = (char *)"Client_Connections_aborted";
+			nm[1] = (char *)"Client_Connections_connected";
+			nm[2] = (char *)"Client_Connections_created";
+			nm[3] = (char *)"Server_Connections_aborted";
+			nm[4] = (char *)"Server_Connections_connected";
+			nm[5] = (char *)"Server_Connections_created";
+			nl = (char **)malloc(sizeof(char *)*6);
+			nl[0] = (char *)"Client Connections aborted";
+			nl[1] = (char *)"Client Connections connected";
+			nl[2] = (char *)"Client Connections created";
+			nl[3] = (char *)"Server Connections aborted";
+			nl[4] = (char *)"Server Connections connected";
+			nl[5] = (char *)"Server Connections created";
+			nv = (char **)malloc(sizeof(char *)*6);
+			nv[0] = extract_values(pgsql_metrics_sqlite,2,true,(double)1);
+			nv[1] = extract_values(pgsql_metrics_sqlite,3,false,(double)1);
+			nv[2] = extract_values(pgsql_metrics_sqlite,4,true,(double)1);
+			nv[3] = extract_values(pgsql_metrics_sqlite,5,true,(double)1);
+			nv[4] = extract_values(pgsql_metrics_sqlite,6,false,(double)1);
+			nv[5] = extract_values(pgsql_metrics_sqlite,7,true,(double)1);
+			ts = extract_ts(pgsql_metrics_sqlite,true);
+			s1 = generate_chart((char *)"myChart1",ts,6,nm,nl,nv);
+			s.append(s1.c_str());
+			free(nm);
+			free(nl);
+			for (int aa=0 ; aa<6 ; aa++) {
+				free(nv[aa]);
+			}
+			free(nv);
+			free(ts);
+
+
+			nm = (char **)malloc(sizeof(char *)*6);
+			nm[0] = (char *)"ConnPool_get_conn_failure";
+			nm[1] = (char *)"ConnPool_get_conn_immediate";
+			nm[2] = (char *)"ConnPool_get_conn_success";
+			nm[3] = (char *)"Questions";
+			nm[4] = (char *)"Slow_queries";
+			nm[5] = (char *)"GTID_consistent_queries";
+			nl = (char **)malloc(sizeof(char *)*6);
+			nl[0] = (char *)"ConnPool failure";
+			nl[1] = (char *)"ConnPool immediate";
+			nl[2] = (char *)"ConnPool success";
+			nl[3] = (char *)"Questions";
+			nl[4] = (char *)"Slow Queries";
+			nl[5] = (char *)"GTID Consistent Queries";
+			nv = (char **)malloc(sizeof(char *)*6);
+			nv[0] = extract_values(pgsql_metrics_sqlite,8,true);
+			nv[1] = extract_values(pgsql_metrics_sqlite,9,true);
+			nv[2] = extract_values(pgsql_metrics_sqlite,10,true);
+			nv[3] = extract_values(pgsql_metrics_sqlite,11,true);
+			nv[4] = extract_values(pgsql_metrics_sqlite,12,true);
+			nv[5] = extract_values(pgsql_metrics_sqlite,13,true);
+			ts = extract_ts(pgsql_metrics_sqlite,true);
+			s1 = generate_chart((char *)"myChart2",ts,6,nm,nl,nv);
+			s.append(s1.c_str());
+			free(nm);
+			free(nl);
+			for (int aa=0 ; aa<6 ; aa++) {
+				free(nv[aa]);
+			}
+			free(nv);
+			free(ts);
+			delete pgsql_metrics_sqlite;
 
 			s.append("</body></html>");
 			response = MHD_create_response_from_buffer(s.length(), (void *) s.c_str(), MHD_RESPMEM_MUST_COPY);

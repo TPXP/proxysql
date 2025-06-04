@@ -2320,6 +2320,13 @@ __end_while_pool:
 						delete resultset;
 					}
 				}
+				if (GloPTH) {
+					SQLite3_result * resultset=GloPTH->SQL3_GlobalStatus(false);
+					if (resultset) {
+						GloProxyStats->PgSQL_Threads_Handler_sets(resultset);
+						delete resultset;
+					}
+				}
 				if (MyHGM) {
 					SQLite3_result * resultset=MyHGM->SQL3_Get_ConnPool_Stats();
 					if (resultset) {
