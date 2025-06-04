@@ -530,12 +530,6 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			s.append("<p></p>\n");
 			s1 = generate_canvas((char *)"myChart2");
 			s.append(s1.c_str());
-			s.append("<p></p>\n");
-			s1 = generate_canvas((char *)"myChart3");
-			s.append(s1.c_str());
-			s.append("<p></p>\n");
-			s1 = generate_canvas((char *)"myChart4");
-			s.append(s1.c_str());
 			s.append("</div>\n");
 			SQLite3_result *cpu_sqlite = GloProxyStats->get_system_cpu_metrics(interval_i);
 #ifndef NOJEM
@@ -620,9 +614,6 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			s.append(s1.c_str());
 			s.append("<p></p>\n");
 			s1 = generate_canvas((char *)"myChart3");
-			s.append(s1.c_str());
-			s.append("<p></p>\n");
-			s1 = generate_canvas((char *)"myChart4");
 			s.append(s1.c_str());
 			s.append("</div>\n");
 			char **nm = NULL;
@@ -747,12 +738,6 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			s.append(s1.c_str());
 			s.append("<p></p>\n");
 			s1 = generate_canvas((char *)"myChart2");
-			s.append(s1.c_str());
-			s.append("<p></p>\n");
-			s1 = generate_canvas((char *)"myChart3");
-			s.append(s1.c_str());
-			s.append("<p></p>\n");
-			s1 = generate_canvas((char *)"myChart4");
 			s.append(s1.c_str());
 			s.append("</div>\n");
 			SQLite3_result *mysql_metrics_sqlite = GloProxyStats->get_MySQL_Query_Cache_metrics(interval_i);
