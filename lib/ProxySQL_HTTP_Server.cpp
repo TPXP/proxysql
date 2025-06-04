@@ -125,6 +125,7 @@ static char *generate_home() {
 	html.append("<div style=\"margin-top: 15px;\"><a href=\"/\""); html.append(style2); html.append("Home</a>\n");
 	html.append("<a href=stats?metric=system"); html.append(style2); html.append("System</a>\n");
 	html.append("<a href=stats?metric=mysql"); html.append(style2); html.append("MySQL</a>\n");
+	html.append("<a href=stats?metric=pgsql"); html.append(style2); html.append("PostgreSQL</a>\n");
 	html.append("<a href=stats?metric=cache"); html.append(style2); html.append("Query Cache</a></div>\n");
 	html.append("</span>\n</div>\n");
 
@@ -825,7 +826,7 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			s.append(buttons);
 			free(buttons);
 			s.append("<div class=\"graphs\" style=\"clear: both; height: auto;\">\n");
-			s.append("<h1>MySQL</h1>\n");
+			s.append("<p><b>MySQL</b></p>\n");
 			string s1 = generate_canvas((char *)"myChart1");
 			s.append(s1.c_str());
 			s.append("<p></p>\n");
@@ -833,7 +834,7 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			s.append(s1.c_str());
 			s.append("</div>\n");
 			s.append("<div class=\"graphs\" style=\"clear: both; height: auto;\">\n");
-			s.append("<h1>PostgreSQL</h1>\n");
+			s.append("<p><b>PostgreSQL</b></p>\n");
 			s1 = generate_canvas((char *)"myChart3");
 			s.append(s1.c_str());
 			s.append("<p></p>\n");
