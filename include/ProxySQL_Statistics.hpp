@@ -156,6 +156,7 @@ class ProxySQL_Statistics {
 #endif
 	bool MySQL_Query_Cache_timetoget(unsigned long long);
 	void MySQL_Threads_Handler_sets(SQLite3_result *);
+	void PgSQL_Threads_Handler_sets(SQLite3_result *);
 	void MyHGM_Handler_sets(SQLite3_result *, SQLite3_result *);
 	void system_cpu_sets();
 
@@ -163,7 +164,6 @@ class ProxySQL_Statistics {
 	void system_memory_sets();
 #endif
 	void MySQL_Query_Cache_sets(SQLite3_result *);
-	void PgSQL_Query_Cache_sets(SQLite3_result *);
 	SQLite3_result * get_mysql_metrics(int interval);
 	SQLite3_result * get_pgsql_metrics(int interval);
 	SQLite3_result * get_myhgm_metrics(int interval);
