@@ -44,6 +44,7 @@
 
 extern ProxySQL_Statistics *GloProxyStats;
 extern MySQL_Threads_Handler *GloMTH;
+extern PgSQL_Threads_Handler *GloPTH;
 extern ProxySQL_Admin *GloAdmin;
 extern MySQL_Authentication *GloMyAuth;
 extern SQLite3_Server *GloSQLite3Server;
@@ -163,10 +164,17 @@ static char *generate_home() {
 		}
 	}
 	html.append("<br>\n");
-	html.append("<b>Worker threads = </b>");
+	html.append("<b>MySQL worker threads = </b>");
 	{
 		char buf[16];
 		sprintf(buf,"%u",GloMTH->num_threads);
+		html.append(buf);
+	}
+	html.append("<br>\n");
+	html.append("<b>PostgreSQL worker threads = </b>");
+	{
+		char buf[16];
+		sprintf(buf,"%u",GloPTH->num_threads);
 		html.append(buf);
 	}
 	html.append("<br>\n");
@@ -177,9 +185,22 @@ static char *generate_home() {
 		html.append("<span style=\"background-color: red;\"> disabled </span>");
 	}
 	html.append("<br>\n");
-	html.append("<b>Monitor = </b>");
+	html.append("<b>MySQL Monitor = </b>");
 	{
 		char *en = GloMTH->get_variable((char *)"monitor_enabled");
+		if (en && strcmp(en,"true")==0) {
+			html.append("<span style=\"color: green;\">enabled</span>");
+		} else {
+			html.append("<span style=\"background-color: red;\"> disabled </span>");
+		}
+		if (en) {
+			free(en);
+		}
+	}
+	html.append("<br>\n");
+	html.append("<b>PostgreSQL Monitor = </b>");
+	{
+		char *en = GloPTH->get_variable((char *)"monitor_enabled");
 		if (en && strcmp(en,"true")==0) {
 			html.append("<span style=\"color: green;\">enabled</span>");
 		} else {
@@ -226,6 +247,17 @@ static char *generate_home() {
 		}
 	} else {
 		html.append("<b>MySQL interface(s)</b> = <span style=\"background-color: red;\"> Not started </span><br>");
+	}
+	if (GloPTH) {
+		char *en = GloPTH->get_variable((char *)"interfaces");
+		if (en) {
+			html.append("<b>PostgreSQL interface(s)</b> = ");
+			html.append(en);
+			html.append("<br>\n");
+			free(en);
+		}
+	} else {
+		html.append("<b>PostgreSQL interface(s)</b> = <span style=\"background-color: red;\"> Not started </span><br>");
 	}
 	if (GloVars.global.sqlite3_server==false) {
 		html.append("<b>SQLite3 = </b><span style=\"background-color: yellow;\"> Disabled </span><br>\n");
