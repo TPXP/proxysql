@@ -902,10 +902,6 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			delete mysql_metrics_sqlite;
 
 			SQLite3_result *pgsql_metrics_sqlite = GloProxyStats->get_PgSQL_Query_Cache_metrics(interval_i);
-			char **nm = NULL;
-			char **nl = NULL;
-			char **nv = NULL;
-			char *ts = NULL;
 
 			nm = (char **)malloc(sizeof(char *)*5);
 			nm[0] = (char *)"count_GET";
