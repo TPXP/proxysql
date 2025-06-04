@@ -825,12 +825,22 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			s.append(buttons);
 			free(buttons);
 			s.append("<div class=\"graphs\" style=\"clear: both; height: auto;\">\n");
+			s.append("<h1>MySQL</h1>\n");
 			string s1 = generate_canvas((char *)"myChart1");
 			s.append(s1.c_str());
 			s.append("<p></p>\n");
 			s1 = generate_canvas((char *)"myChart2");
 			s.append(s1.c_str());
 			s.append("</div>\n");
+			s.append("<div class=\"graphs\" style=\"clear: both; height: auto;\">\n");
+			s.append("<h1>PostgreSQL</h1>\n");
+			string s1 = generate_canvas((char *)"myChart3");
+			s.append(s1.c_str());
+			s.append("<p></p>\n");
+			s1 = generate_canvas((char *)"myChart4");
+			s.append(s1.c_str());
+			s.append("</div>\n");
+
 			SQLite3_result *mysql_metrics_sqlite = GloProxyStats->get_MySQL_Query_Cache_metrics(interval_i);
 			char **nm = NULL;
 			char **nl = NULL;
@@ -890,6 +900,66 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			free(nv);
 			free(ts);
 			delete mysql_metrics_sqlite;
+
+			SQLite3_result *pgsql_metrics_sqlite = GloProxyStats->get_PgSQL_Query_Cache_metrics(interval_i);
+			char **nm = NULL;
+			char **nl = NULL;
+			char **nv = NULL;
+			char *ts = NULL;
+
+			nm = (char **)malloc(sizeof(char *)*5);
+			nm[0] = (char *)"count_GET";
+			nm[1] = (char *)"count_GET_OK";
+			nm[2] = (char *)"count_SET";
+			nm[3] = (char *)"Entries_Purged";
+			nm[4] = (char *)"Entries_In_Cache";
+			nl = (char **)malloc(sizeof(char *)*5);
+			nl[0] = (char *)"Count GET";
+			nl[1] = (char *)"Count GET OK";
+			nl[2] = (char *)"Count SET";
+			nl[3] = (char *)"Entries Purged";
+			nl[4] = (char *)"Entries In Cache";
+			nv = (char **)malloc(sizeof(char *)*6);
+			nv[0] = extract_values(pgsql_metrics_sqlite,2,true,(double)1);
+			nv[1] = extract_values(pgsql_metrics_sqlite,3,true,(double)1);
+			nv[2] = extract_values(pgsql_metrics_sqlite,4,true,(double)1);
+			nv[3] = extract_values(pgsql_metrics_sqlite,7,true,(double)1);
+			nv[4] = extract_values(pgsql_metrics_sqlite,8,false,(double)1);
+			ts = extract_ts(pgsql_metrics_sqlite,true);
+			s1 = generate_chart((char *)"myChart1",ts,5,nm,nl,nv);
+			s.append(s1.c_str());
+			free(nm);
+			free(nl);
+			for (int aa=0 ; aa<5 ; aa++) {
+				free(nv[aa]);
+			}
+			free(nv);
+			free(ts);
+
+
+			nm = (char **)malloc(sizeof(char *)*3);
+			nm[0] = (char *)"bytes_IN";
+			nm[1] = (char *)"bytes_OUT";
+			nm[2] = (char *)"Memory_Bytes";
+			nl = (char **)malloc(sizeof(char *)*3);
+			nl[0] = (char *)"KB IN";
+			nl[1] = (char *)"KB OUT";
+			nl[2] = (char *)"QC size MB";
+			nv = (char **)malloc(sizeof(char *)*3);
+			nv[0] = extract_values(pgsql_metrics_sqlite,5,true,(double)1/1024);
+			nv[1] = extract_values(pgsql_metrics_sqlite,6,true,(double)1/1024);
+			nv[2] = extract_values(pgsql_metrics_sqlite,9,false,(double)1/1024/1024);
+			ts = extract_ts(pgsql_metrics_sqlite,true);
+			s1 = generate_chart((char *)"myChart2",ts,3,nm,nl,nv);
+			s.append(s1.c_str());
+			free(nm);
+			free(nl);
+			for (int aa=0 ; aa<3 ; aa++) {
+				free(nv[aa]);
+			}
+			free(nv);
+			free(ts);
+			delete pgsql_metrics_sqlite;
 
 			s.append("</body></html>");
 			response = MHD_create_response_from_buffer(s.length(), (void *) s.c_str(), MHD_RESPMEM_MUST_COPY);

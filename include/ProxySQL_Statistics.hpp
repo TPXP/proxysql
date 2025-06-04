@@ -84,7 +84,8 @@
 #define STATSDB_SQLITE_TABLE_MYSQL_QUERY_CACHE_HOUR "CREATE TABLE mysql_query_cache_hour (timestamp INT NOT NULL, count_GET INT NOT NULL, count_GET_OK INT NOT NULL, count_SET INT NOT NULL, bytes_IN INT NOT NULL, bytes_OUT INT NOT NULL, Entries_Purged INT NOT NULL, Entries_In_Cache INT NOT NULL, Memory_Bytes INT NOT NULL, PRIMARY KEY (timestamp))"
 #define STATSDB_SQLITE_TABLE_MYSQL_QUERY_CACHE_DAY "CREATE TABLE mysql_query_cache_day (timestamp INT NOT NULL, count_GET INT NOT NULL, count_GET_OK INT NOT NULL, count_SET INT NOT NULL, bytes_IN INT NOT NULL, bytes_OUT INT NOT NULL, Entries_Purged INT NOT NULL, Entries_In_Cache INT NOT NULL, Memory_Bytes INT NOT NULL, PRIMARY KEY (timestamp))"
 
-
+#define STATSDB_SQLITE_TABLE_PGSQL_QUERY_CACHE "CREATE TABLE pgsql_query_cache (timestamp INT NOT NULL, count_GET INT NOT NULL, count_GET_OK INT NOT NULL, count_SET INT NOT NULL, bytes_IN INT NOT NULL, bytes_OUT INT NOT NULL, Entries_Purged INT NOT NULL, Entries_In_Cache INT NOT NULL, Memory_Bytes INT NOT NULL, PRIMARY KEY (timestamp))"
+#define STATSDB_SQLITE_TABLE_PGSQL_QUERY_CACHE_HOUR "CREATE TABLE pgsql_query_cache_hour (timestamp INT NOT NULL, count_GET INT NOT NULL, count_GET_OK INT NOT NULL, count_SET INT NOT NULL, bytes_IN INT NOT NULL, bytes_OUT INT NOT NULL, Entries_Purged INT NOT NULL, Entries_In_Cache INT NOT NULL, Memory_Bytes INT NOT NULL, PRIMARY KEY (timestamp))"
 
 #define STATSDB_SQLITE_TABLE_HISTORY_PGSQL_STATUS_VARIABLES_V2_4_0 "CREATE TABLE history_pgsql_status_variables (timestamp INT NOT NULL , variable_id INT NOT NULL , variable_value VARCHAR NOT NULL , PRIMARY KEY (timestamp, variable_id))"
 
@@ -166,6 +167,7 @@ class ProxySQL_Statistics {
 	void system_memory_sets();
 #endif
 	void MySQL_Query_Cache_sets(SQLite3_result *);
+	void PgSQL_Query_Cache_sets(SQLite3_result *);
 	SQLite3_result * get_mysql_metrics(int interval);
 	SQLite3_result * get_pgsql_metrics(int interval);
 	SQLite3_result * get_myhgm_metrics(int interval);
@@ -174,6 +176,7 @@ class ProxySQL_Statistics {
 	SQLite3_result * get_system_memory_metrics(int interval);
 #endif
 	SQLite3_result * get_MySQL_Query_Cache_metrics(int interval);
+	SQLite3_result * get_PgSQL_Query_Cache_metrics(int interval);
 	void disk_upgrade_mysql_connections();
 
 	/** 

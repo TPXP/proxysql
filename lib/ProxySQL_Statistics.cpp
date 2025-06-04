@@ -94,6 +94,9 @@ void ProxySQL_Statistics::init() {
 	insert_into_tables_defs(tables_defs_statsdb_disk,"mysql_query_cache_hour", STATSDB_SQLITE_TABLE_MYSQL_QUERY_CACHE_HOUR);
 	insert_into_tables_defs(tables_defs_statsdb_disk,"mysql_query_cache_day", STATSDB_SQLITE_TABLE_MYSQL_QUERY_CACHE_DAY);
 
+	insert_into_tables_defs(tables_defs_statsdb_disk,"pgsql_query_cache", STATSDB_SQLITE_TABLE_PGSQL_QUERY_CACHE);
+	insert_into_tables_defs(tables_defs_statsdb_disk,"pgsql_query_cache_hour", STATSDB_SQLITE_TABLE_PGSQL_QUERY_CACHE_HOUR);
+
 	insert_into_tables_defs(tables_defs_statsdb_disk,"myhgm_connections", STATSDB_SQLITE_TABLE_MYHGM_CONNECTIONS);
 	insert_into_tables_defs(tables_defs_statsdb_disk,"myhgm_connections_hour", STATSDB_SQLITE_TABLE_MYHGM_CONNECTIONS_HOUR);
 	insert_into_tables_defs(tables_defs_statsdb_disk,"myhgm_connections_day", STATSDB_SQLITE_TABLE_MYHGM_CONNECTIONS_DAY);
@@ -446,6 +449,51 @@ SQLite3_result * ProxySQL_Statistics::get_MySQL_Query_Cache_metrics(int interval
 	char *query = NULL;
 	char *query1 = (char *)"SELECT SUBSTR(FROM_UNIXTIME(timestamp),0,20) ts, timestamp, count_GET, count_GET_OK, count_SET, bytes_IN, bytes_OUT, Entries_Purged, Entries_In_Cache, Memory_Bytes FROM mysql_query_cache WHERE timestamp BETWEEN %d AND %d ORDER BY timestamp";
 	char *query2 = (char *)"SELECT SUBSTR(FROM_UNIXTIME(timestamp),0,20) ts, timestamp, count_GET, count_GET_OK, count_SET, bytes_IN, bytes_OUT, Entries_Purged, Entries_In_Cache, Memory_Bytes FROM mysql_query_cache_hour WHERE timestamp BETWEEN %d AND %d ORDER BY timestamp";
+	time_t ts = time(NULL);
+	switch (interval) {
+		case 1800:
+		case 3600:
+		case 7200:
+			query = (char *)malloc(strlen(query1)+128);
+			sprintf(query, query1, ts-interval, ts);
+			break;
+		case 28800:
+		case 86400:
+		case 259200:
+		case 604800:
+		case 2592000:
+		case 7776000:
+			query = (char *)malloc(strlen(query2)+128);
+			sprintf(query, query2, ts-interval, ts);
+			break;
+		default:
+			// LCOV_EXCL_START
+			assert(0);
+			break;
+			// LCOV_EXCL_STOP
+	}
+	//fprintf(stderr,"%s\n", query);
+	statsdb_disk->execute_statement(query, &error , &cols , &affected_rows , &resultset);
+	free(query);
+	if (error) {
+		if (resultset) {
+			delete resultset;
+			resultset = NULL;
+		}
+		free(error);
+	}
+	return resultset;
+}
+
+
+SQLite3_result * ProxySQL_Statistics::get_PgSQL_Query_Cache_metrics(int interval) {
+	SQLite3_result *resultset = NULL;
+	int cols;
+	int affected_rows;
+	char *error = NULL;
+	char *query = NULL;
+	char *query1 = (char *)"SELECT SUBSTR(FROM_UNIXTIME(timestamp),0,20) ts, timestamp, count_GET, count_GET_OK, count_SET, bytes_IN, bytes_OUT, Entries_Purged, Entries_In_Cache, Memory_Bytes FROM pgsql_query_cache WHERE timestamp BETWEEN %d AND %d ORDER BY timestamp";
+	char *query2 = (char *)"SELECT SUBSTR(FROM_UNIXTIME(timestamp),0,20) ts, timestamp, count_GET, count_GET_OK, count_SET, bytes_IN, bytes_OUT, Entries_Purged, Entries_In_Cache, Memory_Bytes FROM pgsql_query_cache_hour WHERE timestamp BETWEEN %d AND %d ORDER BY timestamp";
 	time_t ts = time(NULL);
 	switch (interval) {
 		case 1800:
@@ -1338,6 +1386,111 @@ void ProxySQL_Statistics::MySQL_Query_Cache_sets(SQLite3_result *resultset) {
 		sprintf(buf,"DELETE FROM mysql_query_cache WHERE timestamp < %ld", ts - 3600*24*7);
 		statsdb_disk->execute(buf);
 		sprintf(buf,"DELETE FROM mysql_query_cache_hour WHERE timestamp < %ld", ts - 3600*24*365);
+		statsdb_disk->execute(buf);
+	}
+}
+
+void ProxySQL_Statistics::PgSQL_Query_Cache_sets(SQLite3_result *resultset) {
+	int rc;
+	if (resultset == NULL)
+		return;
+	sqlite3 *mydb3=statsdb_disk->get_db();
+	sqlite3_stmt *statement1=NULL;
+	char *query1=NULL;
+	query1=(char *)"INSERT INTO pgsql_query_cache VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)";
+	rc=(*proxy_sqlite3_prepare_v2)(mydb3, query1, -1, &statement1, 0);
+	if (rc!=SQLITE_OK) {
+		proxy_error("SQLITE CRITICAL error: %s . Shutting down.\n", (*proxy_sqlite3_errmsg)(mydb3));
+		exit(EXIT_SUCCESS);
+	}
+
+	uint64_t qc_values[9];
+	for (int i=0; i<9; i++) {
+		qc_values[i]=0;
+	}
+	qc_values[0] = time(NULL);
+
+	for (std::vector<SQLite3_row *>::iterator it = resultset->rows.begin() ; it != resultset->rows.end(); ++it) {
+		SQLite3_row *r1=*it;
+		if (!strcasecmp(r1->fields[0],"Query_Cache_count_GET")) {
+			qc_values[1]=strtoull(r1->fields[1], NULL, 10);
+			continue;
+		}
+		if (!strcasecmp(r1->fields[0],"Query_Cache_count_GET_OK")) {
+			qc_values[2]=strtoull(r1->fields[1], NULL, 10);
+			continue;
+		}
+		if (!strcasecmp(r1->fields[0],"Query_Cache_count_SET")) {
+			qc_values[3]=strtoull(r1->fields[1], NULL, 10);
+			continue;
+		}
+		if (!strcasecmp(r1->fields[0],"Query_Cache_bytes_IN")) {
+			qc_values[4]=strtoull(r1->fields[1], NULL, 10);
+			continue;
+		}
+		if (!strcasecmp(r1->fields[0],"Query_Cache_bytes_OUT")) {
+			qc_values[5]=strtoull(r1->fields[1], NULL, 10);
+			continue;
+		}
+		if (!strcasecmp(r1->fields[0],"Query_Cache_Purged")) {
+			qc_values[6]=strtoull(r1->fields[1], NULL, 10);
+			continue;
+		}
+		if (!strcasecmp(r1->fields[0],"Query_Cache_Entries")) {
+			qc_values[7]=strtoull(r1->fields[1], NULL, 10);
+			continue;
+		}
+		if (!strcasecmp(r1->fields[0],"Query_Cache_Memory_bytes")) {
+			qc_values[8]=strtoull(r1->fields[1], NULL, 10);
+			continue;
+		}
+	}
+
+	for (int i=0; i<9; i++) {
+		rc=(*proxy_sqlite3_bind_int64)(statement1, i+1, qc_values[i]); ASSERT_SQLITE_OK(rc, statsdb_disk);
+	}
+
+	SAFE_SQLITE3_STEP2(statement1);
+	rc=(*proxy_sqlite3_clear_bindings)(statement1); ASSERT_SQLITE_OK(rc, statsdb_disk);
+	rc=(*proxy_sqlite3_reset)(statement1); //ASSERT_SQLITE_OK(rc, statsdb_disk);
+	(*proxy_sqlite3_finalize)(statement1);
+
+	SQLite3_result *resultset2 = NULL;
+	int cols;
+	int affected_rows;
+	char *error = NULL;
+	time_t ts = time(NULL);
+	char *query = (char *)"SELECT MAX(timestamp) FROM pgsql_query_cache_hour";
+	statsdb_disk->execute_statement(query, &error , &cols , &affected_rows , &resultset2);
+	if (error) {
+		if (resultset2) {
+			delete resultset2;
+			resultset2 = NULL;
+		}
+		free(error);
+	} else {
+		char buf[1024];
+		if (resultset2->rows_count == 0) {
+			sprintf(buf,"INSERT INTO pgsql_query_cache_hour SELECT timestamp/3600*3600 , MAX(count_GET), MAX(count_GET_OK), MAX(count_SET), MAX(bytes_IN), MAX(bytes_OUT), MAX(Entries_Purged), AVG(Entries_In_Cache), AVG(Memory_bytes) FROM mysql_query_cache WHERE timestamp < %ld GROUP BY timestamp/3600", (ts/3600)*3600);
+			statsdb_disk->execute(buf);
+		} else {
+			SQLite3_row *r = resultset2->rows[0];
+			if (r->fields[0]) {
+				time_t t = atol(r->fields[0]);
+				if (ts >= t + 3600) {
+					sprintf(buf,"INSERT INTO pgsql_query_cache_hour SELECT timestamp/3600*3600 , MAX(count_GET), MAX(count_GET_OK), MAX(count_SET), MAX(bytes_IN), MAX(bytes_OUT), MAX(Entries_Purged), AVG(Entries_In_Cache), AVG(Memory_bytes) FROM mysql_query_cache WHERE timestamp >= %ld AND timestamp < %ld GROUP BY timestamp/3600", t+3600 , (ts/3600)*3600);
+					statsdb_disk->execute(buf);
+				}
+			} else {
+				sprintf(buf,"INSERT INTO pgsql_query_cache_hour SELECT timestamp/3600*3600 , MAX(count_GET), MAX(count_GET_OK), MAX(count_SET), MAX(bytes_IN), MAX(bytes_OUT), MAX(Entries_Purged), AVG(Entries_In_Cache), AVG(Memory_bytes) FROM mysql_query_cache WHERE timestamp < %ld GROUP BY timestamp/3600", (ts/3600)*3600);
+				statsdb_disk->execute(buf);
+			}
+		}
+		delete resultset2;
+		resultset2 = NULL;
+		sprintf(buf,"DELETE FROM pgsql_query_cache WHERE timestamp < %ld", ts - 3600*24*7);
+		statsdb_disk->execute(buf);
+		sprintf(buf,"DELETE FROM pgsql_query_cache_hour WHERE timestamp < %ld", ts - 3600*24*365);
 		statsdb_disk->execute(buf);
 	}
 }

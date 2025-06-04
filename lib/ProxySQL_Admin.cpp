@@ -2356,6 +2356,13 @@ __end_while_pool:
 						delete resultset;
 					}
 				}
+				if (GloPgQC) {
+					SQLite3_result * resultset=GloPgQC->SQL3_getStats();
+					if (resultset) {
+						GloProxyStats->PgSQL_Query_Cache_sets(resultset);
+						delete resultset;
+					}
+				}
 			}
 			if (GloProxyStats->mysql_query_digest_to_disk_timetoget(curtime)) {
 				unsigned long long curtime1=monotonic_time();
