@@ -119,6 +119,8 @@ class ProxySQL_Statistics {
 	unsigned long long next_timer_MySQL_Query_Cache;
 	void MySQL_Threads_Handler_sets_v1(SQLite3_result *);
 	void MySQL_Threads_Handler_sets_v2(SQLite3_result *);
+	void PgSQL_Threads_Handler_sets_v1(SQLite3_result *);
+	void PgSQL_Threads_Handler_sets_v2(SQLite3_result *);
 	void MyHGM_Handler_sets_v1(SQLite3_result *);
 	void MyHGM_Handler_sets_connection_pool(SQLite3_result *);
 	public:
