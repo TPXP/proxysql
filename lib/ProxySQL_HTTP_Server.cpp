@@ -834,7 +834,7 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			s.append("</div>\n");
 			s.append("<div class=\"graphs\" style=\"clear: both; height: auto;\">\n");
 			s.append("<h1>PostgreSQL</h1>\n");
-			string s1 = generate_canvas((char *)"myChart3");
+			s1 = generate_canvas((char *)"myChart3");
 			s.append(s1.c_str());
 			s.append("<p></p>\n");
 			s1 = generate_canvas((char *)"myChart4");
@@ -922,7 +922,7 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			nv[3] = extract_values(pgsql_metrics_sqlite,7,true,(double)1);
 			nv[4] = extract_values(pgsql_metrics_sqlite,8,false,(double)1);
 			ts = extract_ts(pgsql_metrics_sqlite,true);
-			s1 = generate_chart((char *)"myChart1",ts,5,nm,nl,nv);
+			s1 = generate_chart((char *)"myChart3",ts,5,nm,nl,nv);
 			s.append(s1.c_str());
 			free(nm);
 			free(nl);
@@ -946,7 +946,7 @@ int ProxySQL_HTTP_Server::handler(void *cls, struct MHD_Connection *connection, 
 			nv[1] = extract_values(pgsql_metrics_sqlite,6,true,(double)1/1024);
 			nv[2] = extract_values(pgsql_metrics_sqlite,9,false,(double)1/1024/1024);
 			ts = extract_ts(pgsql_metrics_sqlite,true);
-			s1 = generate_chart((char *)"myChart2",ts,3,nm,nl,nv);
+			s1 = generate_chart((char *)"myChart4",ts,3,nm,nl,nv);
 			s.append(s1.c_str());
 			free(nm);
 			free(nl);
