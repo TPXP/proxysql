@@ -136,34 +136,6 @@ static char *generate_home() {
 	html.append("<table style=\"font-size: 15px;\" border=0 width=\"100%\">\n");
 	html.append("<tr width=\"100%\">\n");
 	html.append("<td width=\"33%\">\n");
-	html.append("<b>Uptime = </b>");
-	{
-		unsigned long long t1=monotonic_time();
-		char buf1[50];
-		unsigned long long uptime = (t1-GloVars.global.start_time)/1000/1000;
-		unsigned long long days = uptime / 86400;
-		unsigned long long hours = (uptime - days*86400)/3600;
-		unsigned long long mins = (uptime % 3600)/60;
-		unsigned long long secs = uptime % 60;
-		sprintf(buf1,"%llud %02lluh%02llum%02llus", days, hours, mins, secs);
-		html.append(buf1);
-	}
-	html.append("<br>\n");
-	html.append("<b>OS version = </b>");
-	{
-		struct utsname unameData;
-		int rc;
-		rc=uname(&unameData);
-		if (rc==0) {
-			html.append(unameData.sysname); html.append(" ");
-			html.append(unameData.nodename); html.append(" ");
-			html.append(unameData.release); html.append(" ");
-			html.append(unameData.machine);
-        } else {
-			html.append("UNKNOWN");
-		}
-	}
-	html.append("<br>\n");
 	html.append("<b>MySQL worker threads = </b>");
 	{
 		char buf[16];
@@ -272,6 +244,34 @@ static char *generate_home() {
 	}
 	html.append("</td>\n");
 	html.append("<td width=\"33%\">\n");
+	html.append("<b>Uptime = </b>");
+	{
+		unsigned long long t1=monotonic_time();
+		char buf1[50];
+		unsigned long long uptime = (t1-GloVars.global.start_time)/1000/1000;
+		unsigned long long days = uptime / 86400;
+		unsigned long long hours = (uptime - days*86400)/3600;
+		unsigned long long mins = (uptime % 3600)/60;
+		unsigned long long secs = uptime % 60;
+		sprintf(buf1,"%llud %02lluh%02llum%02llus", days, hours, mins, secs);
+		html.append(buf1);
+	}
+	html.append("<br>\n");
+	html.append("<b>OS version = </b>");
+	{
+		struct utsname unameData;
+		int rc;
+		rc=uname(&unameData);
+		if (rc==0) {
+			html.append(unameData.sysname); html.append(" ");
+			html.append(unameData.nodename); html.append(" ");
+			html.append(unameData.release); html.append(" ");
+			html.append(unameData.machine);
+        } else {
+			html.append("UNKNOWN");
+		}
+	}
+	html.append("<br>\n");
 	html.append("<b>ProxySQL version = </b>"); html.append(PROXYSQL_VERSION); html.append("<br>\n");
 	html.append("<b>ProxySQL latest  = </b>");
 	{
